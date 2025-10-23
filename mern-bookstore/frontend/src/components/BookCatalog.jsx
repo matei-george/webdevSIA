@@ -3,7 +3,7 @@ import axios from "axios";
 import SearchFilterSort from "./SearchFilterSort";
 import CardSidebar from "./CardSidebar";
 import "./BookCatalog.css";
-
+import { FaCartShopping } from "react-icons/fa6";
 const BookCatalog = () => {
    const [products, setProducts] = useState([]);
    const [filteredProducts, setFilteredProducts] = useState([]);
@@ -82,7 +82,7 @@ const BookCatalog = () => {
                </div>
                {/* Buton coș cu badge */}
                <button className="cart-button" onClick={openCart}>
-                  Coş
+                  <FaCartShopping />
                   {cartTotal > 0 && <span className="cart-badge">{cartTotal}</span>}
                </button>
             </div>
