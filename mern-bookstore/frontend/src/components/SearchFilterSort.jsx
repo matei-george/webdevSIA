@@ -33,11 +33,20 @@ const SearchFilterSort = ({ products, onFilteredProducts, categories = [] }) => 
       }
 
       // Filtram dupa pret
-      filtered = filtered.filter((product) => {
-         const price = product.discountPrice || product.price;
-         return (price) => priceRange[0] && price <= priceRange[1];
-      });
+      if (priceRange[0] !== 0 || priceRange[1] !== 200) {
+         // O condiție pentru a filtra doar dacă intervalul nu este cel implicit (0-200)
+         filtered = filtered.filter((product) => {
+            // Determinăm prețul relevant al produsului
+            const priceProduct = product.discountPrice || product.price;
 
+            // Ne asigurăm că valoarea minimă nu este mai mare decât cea maximă
+            const minPrice = Math.min(priceRange[0], priceRange[1]);
+            const maxPrice = Math.max(priceRange[0], priceRange[1]);
+
+            // Returnăm un boolean: prețul produsului este ÎNTRE min și max?
+            return priceProduct >= minPrice && priceProduct <= maxPrice;
+         });
+      }
       //   Filtram dupa stoc
       if (inStockOnly) {
          filtered = filtered.filter((product) => product.stock > 0);
@@ -104,8 +113,7 @@ const SearchFilterSort = ({ products, onFilteredProducts, categories = [] }) => 
                </div>
             </div>
 
-            {/* Categorie
-             */}
+            {/* Categorie */}
             <div className="filter-group">
                <label className="filter-label">Categorie</label>
                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="filter-select">
@@ -120,23 +128,34 @@ const SearchFilterSort = ({ products, onFilteredProducts, categories = [] }) => 
 
             {/* Pret */}
             <div className="filter-group price-group">
-               <label className="filter-label">Pret:{priceRange[0] - priceRange[1]} RON</label>
+               {/* Eticheta: Afișăm întotdeauna valoarea minimă și maximă în ordinea corectă */}
+               <label className="filter-label">
+                  Preț (RON): {Math.min(priceRange[0], priceRange[1])} - {Math.max(priceRange[0], priceRange[1])}
+               </label>
+
                <div className="price-range">
+                  {/* Input pentru Prețul MINIM (priceRange[0]) */}
                   <input
-                     type="range"
+                     type="number"
+                     className="search-input"
                      min="0"
-                     max="200"
+                     // Opțional: poți adăuga o valoare maximă dinamică
+                     max={priceRange[1]}
                      value={priceRange[0]}
-                     onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
-                     className="range-input"
+                     placeholder="Minim"
+                     onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
                   />
+
+                  {/* Input pentru Prețul MAXIM (priceRange[1]) */}
                   <input
-                     type="range"
-                     min="0"
-                     max="200"
+                     type="number"
+                     className="search-input"
+                     min={priceRange[0]}
+                     // Opțional: poți adăuga o valoare minimă dinamică
                      value={priceRange[1]}
-                     onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                     className="range-input"
+                     placeholder="Maxim"
+                     // CORECTAT: Păstrează priceRange[0] și actualizează priceRange[1]
+                     onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 200])}
                   />
                </div>
             </div>
