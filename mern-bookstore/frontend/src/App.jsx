@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import BookCatalog from "./components/BookCatalog";
 import PublicBooks from "./components/PublicBooks";
+import PaymentSuccess from "./components/PaymentSuccess";
 // import  './App.css';
 
 const App = () => {
@@ -10,6 +11,7 @@ const App = () => {
          <Routes>
             <Route path="/" element={<BookCatalog />} />
             <Route path="/publicbooks" element={<PublicBooks />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
          </Routes>
       </Router>
    );

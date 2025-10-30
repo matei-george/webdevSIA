@@ -10,6 +10,8 @@ const CardSidebar = ({ isopen, onClose }) => {
    });
    const [loading, setLoading] = useState(false);
 
+   const [processingPayment, setProcessingPayment] = useState(false);
+
    // Încarcă coşul la deschidere
    useEffect(() => {
       if (isopen) {
@@ -34,6 +36,9 @@ const CardSidebar = ({ isopen, onClose }) => {
          const response = await axios.delete(`http://localhost:3000/api/cart/${productId}`);
          if (response.data.success) {
             setCart(response.data.cart);
+            if (onCartUpdate) {
+               onCartUpdate();
+            }
          }
       } catch (error) {
          console.error("Eroare la ştergerea din coș:", error);
@@ -41,7 +46,33 @@ const CardSidebar = ({ isopen, onClose }) => {
          setLoading(false);
       }
    };
-
+   const handleCheckoutClick = async () => {
+      try {
+         setProcessingPayment(true);
+         const response = await fetch("http://localhost:3000/api/create-checkout-session", {
+            method: "POST",
+            headers: {
+               "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+               amount: cart.total + 19.99,
+               cartItems: cart.items,
+            }),
+         });
+         if (!response.ok) {
+            throw new Error("Eroare server");
+         }
+         const data = await response.json();
+         if (!data.success) {
+            throw new Error(data.error || "Eroare necunoscută");
+         }
+         window.location.href = data.sessionUrl;
+      } catch (error) {
+         console.error(" Eroare la crearea sesiunii de checkout:", error);
+         alert("Eroare la inițializarea plății: " + error.message);
+         setProcessingPayment(false);
+      }
+   };
    if (!isopen) return null;
 
    return (
@@ -87,7 +118,9 @@ const CardSidebar = ({ isopen, onClose }) => {
                         <div className="total-price">
                            Total: <strong>{cart.total.toFixed(2)} RON</strong>
                         </div>
-                        <button className="checkout-btn">Finalizează comanda</button>
+                        <button className="checkout-btn" onClick={handleCheckoutClick} disabled={processingPayment}>
+                           {processingPayment ? "Se deschide plata..." : `Finalizează comanda ${(cart.total + 19.99).toFixed(2)} RON `}
+                        </button>
                      </div>
                   </>
                )}

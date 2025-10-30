@@ -100,6 +100,118 @@ app.get("/api/products", (req, res) => {
    }
 });
 
+const stripe = require("stripe")("sk_test_51PTP1qBVnVm4XrsHx8kIS9f9ehjUSrwxC7G00hsFCPwn9k431jUsBvAwm1R0n8sktiVSnQkvYZr2FXODjjEpjH8d00INU6ab6u");
+
+// inainte de app.get('/', (req, res)
+/**
+ * RUTA POST /api/create-checkout-session
+ * creează sesiune Stripe Checkout
+ */
+app.post("/api/create-checkout-session", async (req, res) => {
+   try {
+      const { amount, cartItems } = req.body;
+      console.log("creează sesiune checkout pentru suma de:", amount);
+      // validări
+      if (!amount || amount < 1) {
+         return res.status(400).json({
+            success: false,
+            error: "Suma invalidă",
+         });
+      }
+      // creează randuri pentru produse
+      const lineItems = [
+         ...cartItems.map((item) => ({
+            price_data: {
+               currency: "ron",
+               product_data: {
+                  name: item.title,
+                  description: `de ${item.author}`,
+                  images: [item.imageUrl],
+               },
+               unit_amount: Math.round(item.price * 100), // preț per unitate
+               // deoarece Stripe lucrează în subunități: RON BANI (1 RON = 100 bani)
+            },
+            quantity: item.quantity,
+         })),
+         // adaugăm transportul
+         {
+            price_data: {
+               currency: "ron",
+               product_data: {
+                  name: "Transport",
+                  description: "Cost livrare",
+               },
+               unit_amount: 1999, // 19.99 RON
+            },
+            quantity: 1,
+         },
+         //
+      ]; // am corectat sintaxa din document
+
+      // creează sesiunea Stripe Checkout
+      const session = await stripe.checkout.sessions.create({
+         payment_method_types: ["card"],
+         line_items: lineItems,
+         mode: "payment",
+         success_url: `${req.headers.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&clear_cart=true`,
+         cancel_url: `${req.headers.origin}/`,
+         metadata: {
+            order_type: "book_store",
+         },
+      });
+
+      console.log("Sesiune checkout creată:", session.id);
+      res.json({
+         success: true,
+         sessionId: session.id,
+         sessionUrl: session.url,
+      });
+   } catch (error) {
+      console.error("Eroare Stripe:", error);
+      res.status(500).json({
+         success: false,
+         error: "Eroare la crearea sesiunii de plată",
+      });
+   }
+});
+
+app.get("/api/check-payment-status/:sessionId", async (req, res) => {
+   try {
+      const { sessionId } = req.params;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      res.json({
+         success: true,
+         paymentStatus: session.payment_status,
+      });
+   } catch (error) {
+      res.status(500).json({ success: false, error: "Eroare verificare plată" });
+   }
+});
+
+/**
+ * RUTA POST /api/clear-cart Golește coșul
+ */
+app.post("/api/clear-cart", async (req, res) => {
+   try {
+      const cart = await readCart();
+      // sterge toate produsele din coș
+      cart.items = [];
+      cart.total = 0;
+      cart.totalItems = 0;
+      saveCart(cart);
+      res.json({
+         success: true,
+         message: "Coș golit cu succes",
+      });
+   } catch (error) {
+      console.error("Eroare la golirea coșului:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la golirea coșului",
+      });
+   }
+});
+
 /**
  * * RUTA GET / - Informații despre API
  */
@@ -239,6 +351,79 @@ app.post("/api/cart", (req, res) => {
       res.status(500).json({
          success: false,
          message: "Eroare server la adăugarea în coş",
+      });
+   }
+});
+
+// inainte de app.get('/', (req, res)
+/**
+ * RUTA POST /api/create-checkout-session
+ * creează sesiune Stripe Checkout
+ */
+app.post("/api/create-checkout-session", async (req, res) => {
+   try {
+      const { amount, cartItems } = req.body;
+      console.log("creează sesiune checkout pentru suma de:", amount);
+      // validări
+      if (!amount || amount < 1) {
+         return res.status(400).json({
+            success: false,
+            error: "Suma invalidă",
+         });
+      }
+      // creează randuri pentru produse
+      const lineItems = [
+         ...cartItems.map((item) => ({
+            price_data: {
+               currency: "ron",
+               product_data: {
+                  name: item.title,
+                  description: `de ${item.author}`,
+                  images: [item.imageUrl],
+               },
+               unit_amount: Math.round(item.price * 100), // preț per unitate
+               // deoarece Stripe lucrează în subunități: RON BANI (1 RON = 100 bani)
+            },
+            quantity: item.quantity,
+         })),
+         // adaugăm transportul
+         {
+            price_data: {
+               currency: "ron",
+               product_data: {
+                  name: "Transport",
+                  description: "Cost livrare",
+               },
+               unit_amount: 1999, // 19.99 RON
+            },
+            quantity: 1,
+         },
+         //
+      ]; // am corectat sintaxa din document
+
+      // creează sesiunea Stripe Checkout
+      const session = await stripe.checkout.sessions.create({
+         payment_method_types: ["card"],
+         line_items: lineItems,
+         mode: "payment",
+         success_url: `${req.headers.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&clear_cart=true`,
+         cancel_url: `${req.headers.origin}/`,
+         metadata: {
+            order_type: "book_store",
+         },
+      });
+
+      console.log("Sesiune checkout creată:", session.id);
+      res.json({
+         success: true,
+         sessionId: session.id,
+         sessionUrl: session.url,
+      });
+   } catch (error) {
+      console.error("Eroare Stripe:", error);
+      res.status(500).json({
+         success: false,
+         error: "Eroare la crearea sesiunii de plată",
       });
    }
 });

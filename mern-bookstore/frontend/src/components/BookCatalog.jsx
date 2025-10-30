@@ -11,11 +11,46 @@ const BookCatalog = () => {
    const [error, setError] = useState(null);
    const [isCartOpen, setIsCartOpen] = useState(false);
    const [cartTotal, setCartTotal] = useState(0);
-
    // Încărcarea produselor la montarea componentei
    useEffect(() => {
+      const checkRecentPayment = async () => {
+         const sessionId = localStorage.getItem("lastCheckoutSession");
+         const timestamp = localStorage.getItem("checkoutTimestamp");
+         if (sessionId && timestamp) {
+            // ... (restul logicii Stripe a rămas neschimbată)
+            const isRecent = Date.now() - parseInt(timestamp) < 300000;
+            if (isRecent) {
+               try {
+                  const response = await fetch(`http://localhost:3000/api/check-payment-status/${sessionId}`);
+                  if (response.ok) {
+                     const data = await response.json();
+                     if (data.paymentStatus === "paid") {
+                        await fetch("http://localhost:3000/api/clear-cart", {
+                           method: "POST",
+                        });
+                     }
+                  }
+                  fetchCartTotal();
+                  localStorage.removeItem("lastCheckoutSession");
+                  localStorage.removeItem("checkoutTimestamp");
+               } catch (error) {
+                  console.error("Error checking payment:", error);
+               }
+            } else {
+               localStorage.removeItem("lastCheckoutSession");
+               localStorage.removeItem("checkoutTimestamp");
+            }
+         }
+      };
+
+      // 1. Apelăm funcția de verificare Stripe
+      checkRecentPayment();
+
+      // 2. 🚨 ACUM APELĂM FUNCȚIA PRINCIPALĂ DE ÎNCĂRCARE A DATELOR!
       fetchProducts();
-      fetchCartTotal(); // Încarcă totalul coşului la inițializare
+
+      // 3. Apelăm funcția de încărcare a totalului coșului
+      fetchCartTotal();
    }, []);
 
    const fetchProducts = async () => {
@@ -65,7 +100,11 @@ const BookCatalog = () => {
    };
 
    const openCart = () => setIsCartOpen(true);
-   const closeCart = () => setIsCartOpen(false);
+   const closeCart = () => {
+      setIsCartOpen(false);
+      // Refetch pentru coș când se închide sidebar-ul
+      fetchCartTotal();
+   };
 
    if (loading) return <div className="loading">Se încarcă produsele...</div>;
 
