@@ -19,7 +19,7 @@ const SearchFilterSort = ({ products, onFilteredProducts, categories = [] }) => 
 
       // Filtram dupa cautare
       if (searchTerm) {
-         filtered = filter.filter(
+         filtered = products.filter(
             (product) =>
                product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                product.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
