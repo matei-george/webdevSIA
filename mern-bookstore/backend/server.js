@@ -21,6 +21,58 @@ app.use(express.json()); // Parser pentru JSON în request body
 // Căile către fișierele de date
 const PRODUCTS_FILE = path.join(__dirname, "data", "books.json");
 
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const USERS_FILE = path.join(__dirname, "data", "users.json");
+
+/**
+ * =====================================
+ * FUNCTII HELPER PENTRU AUTENTIFICARE
+ * =====================================
+ */
+
+// Read USERS
+/**
+ * Funcţie helper pentru citirea utilizatorilor din fişierul JSON
+ * @returns {Object} Obiect cu array-ul de utilizatori
+ */
+const readUsers = () => {
+   try {
+      const data = fs.readFileSync(USERS_FILE, "utf8");
+      return JSON.parse(data);
+   } catch (error) {
+      console.error("Eroare la citirea utilizatorilor:", error);
+      // Returnează structură goală dacă fişierul nu există
+      return { users: [] };
+   }
+};
+
+// Authenticate token
+const authenticateToken = (req, res, next) => {
+   const authHeader = req.headers["authorization"];
+   const token = authHeader && authHeader.split(" ")[1];
+   if (!token) {
+      return res.status(401).json({ success: false, message: "Token required" });
+   }
+
+   jwt.verify(token, process.env.JWT_SECRET || "fallback_secret", (err, user) => {
+      if (err) {
+         return res.status(403).json({ success: false, message: "Token invalid" });
+      }
+      req.user = user;
+      next();
+   });
+};
+
+// Require Admin
+
+const requireAdmin = (req, res, next) => {
+   if (req.user.role !== "admin") {
+      return res.status(403).json({ success: false, message: "Admin access required" });
+   }
+   next();
+};
+
 /**
  * =====================================
  * FUNCTII HELPER PENTRU GESTIUNEA DATELOR
@@ -47,6 +99,276 @@ const readProducts = () => {
  * API ROUTES PENTRU PRODUSE
  * =====================================
  */
+
+/**
+ * RUTA GET /api/admin/products Obține toate produsele pentru admin (cu filtre)
+ * Parametri interogare:
+ *
+ * category: filtrare după categorie
+ * search: căutare în titlu/autor
+ *
+ * status: active/inactive (all pentru toate)
+ * page: paginare
+ *
+ * limit: număr produse per pagină
+ */
+app.get("/api/admin/products", authenticateToken, requireAdmin, (req, res) => {
+   try {
+      const { category, search, status = "all", page = 1, limit = 50, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+
+      console.log("Filtre administrare produse:", { category, search, status, page, limit });
+
+      let products = readProducts();
+
+      // FILTRARE DUPĂ STATUS
+      if (status === "active") {
+         products = products.filter((p) => p.isActive === true);
+      } else if (status === "inactive") {
+         products = products.filter((p) => p.isActive === false);
+      }
+      // 'all' afişează toate produsele
+
+      // FILTRARE DUPĂ CATEGORIE
+      if (category && category !== "all") {
+         products = products.filter((p) => p.category.toLowerCase().includes(category.toLowerCase()));
+      }
+
+      // CAUTARE ÎN TITLU ȘI AUTOR
+      if (search) {
+         const searchTerm = search.toLowerCase();
+         products = products.filter((p) => p.title.toLowerCase().includes(searchTerm) || p.author.toLowerCase().includes(searchTerm) || (p.isbn && p.isbn.includes(search)));
+      }
+
+      // SORTARE
+      const sortField = sortBy || "createdAt";
+      const order = sortOrder === "asc" ? 1 : -1;
+
+      products.sort((a, b) => {
+         if (sortField === "title" || sortField === "author" || sortField === "category") {
+            return order * a[sortField].localeCompare(b[sortField]);
+         } else if (sortField === "price" || sortField === "stock" || sortField === "rating") {
+            return order * (a[sortField] - b[sortField]);
+         } else {
+            // createdAt sau alte câmpuri de data
+            return order * (new Date(a[sortField]) - new Date(b[sortField]));
+         }
+      });
+
+      // PAGINARE
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const startIndex = (pageNum - 1) * limitNum;
+      const endIndex = startIndex + limitNum;
+      const paginatedProducts = products.slice(startIndex, endIndex);
+
+      // STATISTICI
+      const totalProducts = products.length;
+      const activeProducts = products.filter((p) => p.isActive).length;
+      const inactiveProducts = products.filter((p) => !p.isActive).length;
+      const lowStockProducts = products.filter((p) => p.stock < 10 && p.stock > 0).length;
+      const outOfStockProducts = products.filter((p) => p.stock === 0).length;
+
+      res.json({
+         success: true,
+         products: paginatedProducts,
+         pagination: {
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalProducts / limitNum),
+            totalProducts,
+            productsPerPage: limitNum,
+            hasNextPage: endIndex < totalProducts,
+            hasPrevPage: startIndex > 0,
+         },
+         statistics: {
+            total: totalProducts,
+            active: activeProducts,
+            inactive: inactiveProducts,
+            lowStock: lowStockProducts,
+            outOfStock: outOfStockProducts,
+         },
+         filters: {
+            category: category || "all",
+            search: search || "",
+            status: status,
+            sortBy: sortField,
+            sortOrder: sortOrder,
+         },
+      });
+   } catch (error) {
+      console.error("Eroare la obținerea produselor admin:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la obținerea produselor",
+      });
+   }
+});
+
+/**
+ * RUTA POST /api/admin/products Adaugă produs nou cu TOATE câmpurile
+ */
+app.post("/api/admin/products", authenticateToken, requireAdmin, (req, res) => {
+   try {
+      const { title, author, price, description, imageUrl, category, stock, discountPrice, isbn, publisher, pages, year, rating, reviewCount, tags, featured } = req.body;
+
+      console.log("Date primite pentru produs nou:", req.body);
+
+      // VALIDARI OBLIGATORII
+      const requiredFields = ["title", "author", "price", "stock"];
+      const missingFields = requiredFields.filter((field) => !req.body[field]);
+
+      if (missingFields.length > 0) {
+         return res.status(400).json({
+            success: false,
+            message: `Câmpuri obligatorii lipsă: ${missingFields.join(", ")}`,
+            missingFields,
+         });
+      }
+
+      // VALIDARI SUPLIMENTARE
+      if (price < 0) {
+         return res.status(400).json({
+            success: false,
+            message: "Prețul nu poate fi negativ",
+         });
+      }
+      if (stock < 0) {
+         return res.status(400).json({
+            success: false,
+            message: "Stocul nu poate fi negativ",
+         });
+      }
+      if (discountPrice && discountPrice > price) {
+         return res.status(400).json({
+            success: false,
+            message: "Prețul redus nu poate fi mai mare decât prețul original",
+         });
+      }
+
+      const products = readProducts();
+
+      // GENERARE ID INCREMENTAT
+      const lastProduct = products[products.length - 1];
+      const newId = lastProduct ? lastProduct.id + 1 : 1;
+
+      // CREEAZĂ PRODUS NOU CU TOATE CÂMPURILE
+      const newProduct = {
+         id: newId,
+         title: title.trim(),
+         author: author.trim(),
+         isbn: isbn?.trim() || "",
+         category: category?.trim() || "General",
+         price: parseFloat(price),
+         discountPrice: discountPrice ? parseFloat(discountPrice) : null,
+         description: description?.trim() || "",
+         imageUrl: imageUrl?.trim() || "/images/default-book.jpg",
+         stock: parseInt(stock),
+         isActive: true,
+         featured: featured || false,
+         rating: rating ? parseFloat(rating) : null,
+         reviewCount: reviewCount ? parseInt(reviewCount) : 0,
+         tags: tags || [],
+         specifications: {
+            pages: pages?.toString() || "",
+            language: "Romanian",
+            publisher: publisher?.trim() || "",
+            year: year?.toString() || "",
+            format: "Paperback",
+         },
+         createdAt: new Date().toISOString(),
+         updatedAt: new Date().toISOString(),
+         createdBy: req.user.id,
+      };
+
+      // ADAUGĂ PRODUSUL
+      products.push(newProduct);
+
+      // SALVEAZĂ ÎN FIŞIER
+      const productsData = { products };
+      fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(productsData, null, 2));
+
+      console.log("Produs adăugat cu succes:", newProduct.id);
+      res.status(201).json({
+         success: true,
+         message: "Produs adăugat cu succes",
+         product: newProduct,
+      });
+   } catch (error) {
+      console.error("Eroare la adăugarea produsului:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la adăugarea produsului",
+         error: error.message,
+      });
+   }
+});
+
+/**
+ * RUTA POST /api/admin/login Login pentru admin
+ */
+app.post("/api/admin/login", async (req, res) => {
+   try {
+      const { email, password } = req.body;
+      console.log("Încercare login admin:", email);
+
+      if (!email || !password) {
+         return res.status(400).json({
+            success: false,
+            message: "Email și parolă sunt obligatorii",
+         });
+      }
+
+      const usersData = readUsers();
+      const user = usersData.users.find((u) => u.email === email && u.role === "admin");
+
+      if (!user) {
+         console.log("Utilizator admin negăsit:", email);
+         return res.status(401).json({
+            success: false,
+            message: "Acces restricționat doar administratori",
+         });
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+         console.log("Parolă incorectă pentru:", email);
+         return res.status(401).json({
+            success: false,
+            message: "Parolă incorectă",
+         });
+      }
+
+      const token = jwt.sign(
+         {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            name: user.name,
+         },
+         process.env.JWT_SECRET || "fallback_secret",
+         { expiresIn: "8h" }
+      );
+
+      console.log("Login admin reuşit:", email);
+      res.json({
+         success: true,
+         message: "Autentificare admin reușită",
+         token,
+         user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+         },
+      });
+   } catch (error) {
+      console.error("Eroare la login admin:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la autentificare",
+      });
+   }
+});
 
 /**
  * * RUTA GET /api/products - Obține toate produsele active cu opțiuni de filtrare
