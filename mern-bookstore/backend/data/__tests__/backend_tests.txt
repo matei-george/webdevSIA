@@ -1,0 +1,41 @@
+Testare Functii Backend cu noul token generat
+
+1. Toate produsele ✔
+
+curl -X GET "http://localhost:3000/api/admin/products" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 2. Doar produsele active ✔
+
+ curl -X GET "http://localhost:3000/api/admin/products?status=active" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 3. Doar produsele inactive ✔
+ 
+ curl -X GET "http://localhost:3000/api/admin/products?status=inactive" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 4. Filtrare dupa categorie ✔
+ 
+ curl -X GET "http://localhost:3000/api/admin/products?category=Express" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 5. Cautare dupa titlu/autor ✔
+
+ curl -X GET "http://localhost:3000/api/admin/products?search=react" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 6. Paginare ✔
+
+ curl -X GET "http://localhost:3000/api/admin/products?page=1&limit=5" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 7. Sortare dupa pret ✔
+
+ curl -X GET "http://localhost:3000/api/admin/products?sortBy=price&sortOrder=asc" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
+
+ 8. Combinatie de filtre ( categoria General nu e folosita, a fost inlocuita cu Programare) ✔
+
+ curl -X GET "http://localhost:3000/api/admin/products?category=Programare&status=active&search=react&sortBy=price&sortOrder=desc&page=1&limit=10" \
+ -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBib29rc3RvcmUuY29tIiwicm9sZSI6ImFkbWluIiwibmFtZSI6IkFkbWluaXN0cmF0b3IiLCJpYXQiOjE3NjI0NDE5NjUsImV4cCI6MTc2MjQ3MDc2NX0.FwVt6wDnA67EeXhwYySXwQbazesxaIdSiMB09P6WcNg"
