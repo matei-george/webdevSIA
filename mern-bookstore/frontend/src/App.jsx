@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import BookCatalog from "./components/BookCatalog";
 import PublicBooks from "./components/PublicBooks";
 import PaymentSuccess from "./components/PaymentSuccess";
+import AdminLogin from "./components/admin/AdminLogin";
 // import  './App.css';
 
 const App = () => {
@@ -10,6 +11,7 @@ const App = () => {
       <Router>
          <Routes>
             <Route path="/" element={<BookCatalog />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/publicbooks" element={<PublicBooks />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
          </Routes>
