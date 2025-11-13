@@ -99,10 +99,26 @@ Comanda 8 (_Combinatie de filtre_) nu functioneaza implicit cu tag-ul de categor
 
 ---
 
+## 💻 Administrator
+
+In `v13.11` a fost adaugata functionalitatea de logare pe post de _administrator_ cu rutele in `App.jsx`.
+
+Pentru a ne conecta la panelul de administrator folosim url-ul:
+
+`http://localhost:5173/admin/login`
+
+unde introducem credentialele necesare (email + parola).
+
+🚧 Logarea ca administrator va duce implicit catre panelul de produse, care in `v13.11` nu este inca configurat.
+
+---
+
 ## 🏗 Changelog
 
-[ ✨ 6.11.2025 ] → Adaugare Bcrypt, Tokens + Functionalitati _Laborator 6_ + actualizare ReadMe
+[ ✨ 13.11.2025 ] `v13.11` → Adaugare AdminLogin cu stilizare + ruta in `App.jsx` + functionalitati _Laborator 7_ + actualizare ReadMe
 
-[ ✨ 29.10.2025 ] → Adaugare Stripe + Functionalitati _Laborator 5_ + create ReadMe
+[ ✨ 6.11.2025 ] `v6.11` → Adaugare Bcrypt, Tokens + Functionalitati _Laborator 6_ + actualizare ReadMe
 
-[ 🐛 29.10.2025 ] → Bugfix filtrare text-input si selector de pret.
+[ ✨ 29.10.2025 ] `v29.10` → Adaugare Stripe + Functionalitati _Laborator 5_ + create ReadMe
+
+[ 🐛 29.10.2025 ] `v29.10` → Bugfix filtrare text-input si selector de pret.
