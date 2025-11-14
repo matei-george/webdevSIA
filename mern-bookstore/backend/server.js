@@ -23,6 +23,7 @@ const PRODUCTS_FILE = path.join(__dirname, "data", "books.json");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { stripTypeScriptTypes } = require("module");
 const USERS_FILE = path.join(__dirname, "data", "users.json");
 
 /**
@@ -800,6 +801,119 @@ app.delete("/api/cart/:productId", (req, res) => {
       res.status(500).json({
          success: false,
          message: "Eroare server la ştergerea din coş",
+      });
+   }
+});
+
+/**
+ * RUTA PUT/api/admin/products/:id Actualizează produs
+ */
+app.put("/api/admin/products/:id", authenticateToken, requireAdmin, (req, res) => {
+   try {
+      const productId = parseInt(req.params.id);
+      const updates = req.body;
+      let products = readProducts();
+      const productIndex = products.findIndex((p) => p.id === productId);
+
+      if (productIndex === -1) {
+         return res.status(404).json({
+            success: false,
+            message: "Produsul nu a fost găsit",
+         });
+      }
+
+      // Actualizează produsul
+      products[productIndex] = {
+         ...products[productIndex],
+         ...updates,
+         updatedAt: new Date().toISOString(),
+      };
+
+      fs.writeFileSync(PRODUCTS_FILE, JSON.stringify({ products }, null, 2));
+
+      res.json({
+         success: true,
+         message: "Produs actualizat cu succes",
+         product: products[productIndex],
+      });
+   } catch (error) {
+      console.error("Eroare la actualizarea produsului:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la actualizarea produsului",
+      });
+   }
+});
+/**
+ * RUTA DELETE /api/admin/products/:id Şterge sau dezactivează produs
+ */
+app.delete("/api/admin/products/:id", authenticateToken, requireAdmin, (req, res) => {
+   try {
+      const productId = parseInt(req.params.id);
+      const { permanent = false } = req.query; // soft delete vs hard delete
+      let products = readProducts();
+      const productIndex = products.findIndex((p) => p.id === productId);
+
+      if (productIndex === -1) {
+         return res.status(404).json({
+            success: false,
+            message: "Produsul nu a fost găsit",
+         });
+      }
+
+      let message;
+
+      if (permanent) {
+         // Stergere permanentă
+         products.splice(productIndex, 1);
+         message = "Produs şters definitiv";
+      } else {
+         // Soft delete (dezactivează)
+         products[productIndex].isActive = false;
+         products[productIndex].updatedAt = new Date().toISOString();
+         message = "Produs dezactivat cu succes";
+      }
+
+      fs.writeFileSync(PRODUCTS_FILE, JSON.stringify({ products }, null, 2));
+
+      res.json({
+         success: true,
+         message,
+      });
+   } catch (error) {
+      console.error("Eroare la ștergerea produsului:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la ștergerea produsului",
+      });
+   }
+});
+
+/**
+ * RUTA GET /api/admin/products/:id Obține un singur produs
+ */
+app.get("/api/admin/products/:id", authenticateToken, requireAdmin, (req, res) => {
+   try {
+      const productId = parseInt(req.params.id);
+      const products = readProducts();
+      const product = products.find((p) => p.id === productId);
+
+      if (!product) {
+         return res.status(404).json({
+            success: false,
+            message: "Produsul nu a fost găsit",
+         });
+      }
+
+      res.json({
+         success: true,
+         product,
+      });
+   } catch (error) {
+      console.error("Eroare la obținerea produsului:", error);
+      res.status(500).json({
+         success: false,
+         message: "Eroare server la obținerea produsului",
       });
    }
 });
