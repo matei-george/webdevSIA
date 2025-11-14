@@ -74,28 +74,30 @@ Ruleaza aceste comenzi in terminal
 
 In `v6.11` au fost adaugate sistemul de login prin bcrypt precum si sistemul de token authentication cu rutele necesare in `server.js`.
 
-Pentru testarea functiilor au fost puse in _Laborator 6_ cateva functii de curl care au fost adaugate in fisierul `backend_tests.txt`.
+Acum, in `v14.11` a fost implementat complet sistemul de login incluse cu rute de testare pentru backend. Pentru a face acest lucru, trebuie sa ne folosim de extensia **Thunder Client**, care se descarca de pe _Extensions Store_.
 
-Acesta poate fi gasit la locatia
+#### Cum folosim Thunder Client?
 
-```
-mern-bookstore
-└── backend
-    └── data
-        └── __tests__
-            └── backend_tests.txt
-```
+Dupa ce il instalam din Extensions Store, ne asiguram in primul rand ca backend-ul este pornit. Apasam apoi pe `New Request`. In noul tab deschis introducem URL-ul de request, tipul de request, iar in cazul in care trebuie trimise date, vor fi completate ulterior la seciunea de `Body` .
 
-Pentru testarea functiilor trebuie sa ne asiguram ca :
+❗ Inainte de a procesa un request, trebuie obligatoriu sa avem primit token-ul de administrator. Comanda 1 va fi rulata prima de fiecare data, iar apoi token-ul generat va fi plasat in sectiunea de `Authentication` a fiecarui request. In caz contrar, vom primi inapoi `403`.
 
-1. un terminal este deschis cu back-end-ul activ
-2. un alt terminal gol este deschis pentru testarea rutelor necesare.
+#### Request-uri Thunder Client
 
-Fiecare comanda este plasata in terminalul gol pentru a furniza rezultatul dorit.
-
-#### Observatii
-
-Comanda 8 (_Combinatie de filtre_) nu functioneaza implicit cu tag-ul de categorie`category=General` pentru ca nu exista si nu a fost definit inca. A fost inlocuit cu `category=Programare` pentru ca este valid si ofera cel putin un rezultat ca raspuns.
+| Nr. | Tip    | Nume                     | URL                                                                         |
+| --- | ------ | ------------------------ | --------------------------------------------------------------------------- |
+| 1   | `POST` | Admin Login              | `localhost:3000/api/admin/login`                                            |
+| 2   | `POST` | Creaza o noua carte      | `localhost:3000/api/admin/products`                                         |
+| 3   | `GET`  | Toate produsele          | `localhost:3000/api/admin/products`                                         |
+| 4   | `GET`  | Doar produsele active    | `localhost:3000/api/admin/products?status=active`                           |
+| 5   | `GET`  | Doar produsele inactive  | `localhost:3000/api/admin/products?status=inactive`                         |
+| 6   | `GET`  | Cautare dupa titlu/autor | `localhost:3000/api/admin/products?search=react`                            |
+| 7   | `GET`  | Sortare dupa pret        | `localhost:3000/api/admin/products?sortBy=price`                            |
+| 8   | `GET`  | Combinatie de filtre     | `localhost:3000/api/admin/products?status=active&search=React&sortBy=price` |
+| 9   | `GET`  | Un produs specific       | `localhost:3000/api/admin/products/2`                                       |
+| 10  | `PUT`  | Modificare produs        | `localhost:3000/api/admin/products/9`                                       |
+| 11  | `DEL`  | Soft Delete              | `localhost:3000/api/admin/products/1`                                       |
+| 12  | `DEL`  | Permanent Delete         | `localhost:3000/api/admin/products/1?permanent=true`                        |
 
 ---
 
@@ -114,6 +116,8 @@ unde introducem credentialele necesare (email + parola).
 ---
 
 ## 🏗 Changelog
+
+[ ✨ 14.11.2025 ] `v14.11` → Actualizare rute produse + mici imbunatatiri + actualizare ReadMe
 
 [ ✨ 13.11.2025 ] `v13.11` → Adaugare AdminLogin cu stilizare + ruta in `App.jsx` + functionalitati _Laborator 7_ + actualizare ReadMe
 
