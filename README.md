@@ -1,6 +1,6 @@
 # MERN Bookstore
 
-Aplicatie MERN Bookstore laborator SIA Grupa 2.
+Aplicatie MERN Bookstore laborator SIA Grupa 1.
 
 With 💚 by Mat(2.718)i.
 
