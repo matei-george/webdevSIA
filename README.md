@@ -111,11 +111,15 @@ Pentru a ne conecta la panelul de administrator folosim url-ul:
 
 unde introducem credentialele necesare (email + parola).
 
-🚧 Logarea ca administrator va duce implicit catre panelul de produse, care in `v13.11` nu este inca configurat.
+In `v20.11` a fost adaugat panoul complet de administrare al produselor, care este o ruta automata dupa login catre
+
+`http://localhost:5173/admin/products`
 
 ---
 
 ## 🏗 Changelog
+
+[ ✨ 20.11.2025 ] `v20.11` → Adaugare AdminProductPanel + rute + actualizare ReadMe
 
 [ ✨ 14.11.2025 ] `v14.11` → Actualizare rute produse + mici imbunatatiri + actualizare ReadMe
 
