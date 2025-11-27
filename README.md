@@ -117,7 +117,19 @@ In `v20.11` a fost adaugat panoul complet de administrare al produselor, care es
 
 ---
 
+## 🔬 Testare
+
+In `v27.11` au fost adaugate fisiere de test pentru frontend si backend. Acestea se gasesc in directorul nou creat, `test` in fiecare dintre folderele de _frontend_ si _backend_.
+
+Pentru a rula testele de **Frontend** sau **Backend**, intr-un terminal cu path-ul pe folderul de backend ruleaza:
+
+`npm run test` sau `npm run test:ui`
+
+---
+
 ## 🏗 Changelog
+
+[ ✨ 27.11.2025 ] `v27.11` → Adaugare teste frontend si backend + actualizare ReadMe.
 
 [ ✨ 20.11.2025 ] `v20.11` → Adaugare AdminProductPanel + rute + actualizare ReadMe
 
